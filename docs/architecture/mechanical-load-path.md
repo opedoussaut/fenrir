@@ -59,7 +59,7 @@ What may be said today:
 | Side load / bending on the cell | Rigid attachment, pulling at an angle | Carabiners in both eyes; pull in line |
 | Shock load | Dropping a weight onto the device, falling onto it | Forbidden use; overload flag is a warning, not a protection |
 | Cable torn out | Cable snagged while under load | Strain relief at the box; cable tied along the fixed half of the cell |
-| Cell overloaded without notice | Two-handed or lower-body pulls can exceed 2 kN | Overload flag at 2200 N in every packet; consider a 300 kg cell (decision D-006) |
+| Cell overloaded without notice | Two-handed or lower-body pulls can exceed 2 kN | Overload flag at 2200 N in every packet; 200 kg capacity confirmed by the owner (decision D-006), so such pulls are out of scope and must not be attempted |
 | Corrosion or damaged thread | Outdoor use, chalk, sweat | Inspect; cell is IP66 alloy steel, not stainless |
 
 ## First loading (test V-15 outline)

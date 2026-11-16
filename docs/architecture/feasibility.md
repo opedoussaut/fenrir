@@ -152,7 +152,7 @@ numbers the PCB exists to improve.
 | R-02 | NAU7802 LDO near its current limit with a 350 Ω bridge | Excitation sag, extra noise or drift | Measure E+ under load; fall back to 2.7 V; external regulator on the PCB |
 | R-03 | Cell error figures quoted at 9–12 V, we use 3 V | Real non-linearity/hysteresis may differ | Characterise (V-06, V-07) |
 | R-04 | Load cell thread is M12 × 1.75 per its datasheet; usable thread depth is not published | Eye bolts may bottom out or engage too little | Measure the hole depth on receipt before loading |
-| R-05 | Device rating equals the cell's rating (200 kg ≈ 1961 N); two-handed pulls can exceed that | Overload of the cell | Overload flag at 2200 N; consider a 300 kg cell (D-006) |
+| R-05 | Device rating equals the cell's rating (200 kg ≈ 1961 N); two-handed pulls can exceed that | Overload of the cell | Overload flag at 2200 N; owner confirmed 200 kg (D-006), so loads above the cell's rating are out of scope and must be stated as such in the user documentation |
 | R-06 | Firmware platform layer never run on hardware | Unknown bugs in BLE/I²C glue | Phase 2 bring-up |
 | R-07 | ESP32 current draw only estimated | Battery life claim unsupported | USB power meter measurement (V-13) |
 | R-08 | BLE link unencrypted; anyone nearby can write calibration | Tampering | Add bonding or a physical-presence check before distribution (D-011) |
