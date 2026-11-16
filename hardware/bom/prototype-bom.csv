@@ -1,0 +1,12 @@
+ref,item,manufacturer,part_number,qty,unit_price,currency,vat,supplier,price_source,price_date,stock_note,required_for
+U1,ESP32-C6 Feather - STEMMA QT (USB-C; LiPo charger; MAX17048 gauge),Adafruit,5933,1,12.81,EUR,excl,DigiKey EU,search snippet (digikey.fi),2026-11-16,Adafruit direct: out of stock on 2026-11-16; DigiKey EU listed,MCU + BLE + charging
+U2,NAU7802 24-bit ADC breakout - STEMMA QT (terminal block pre-soldered),Adafruit,4538,1,7.00,EUR,unknown,EU retailer (via elecena listing),search snippet,2026-11-16,Adafruit direct: in stock at US$5.95,Bridge ADC
+LC1,SELECTED: Steel S-Type Load Cell 200 kg (C3); M12; IP68; 3 m cable,Phidgets (cell made by Ningbo ANE; model ST01),FRC4165_0,1,50.00,USD,excl,Phidgets direct (Canada),manufacturer product page,2026-11-16,124 in stock; 5+ US$48; 10+ US$46; shipping and French import VAT on top,Sensor
+LC1-alt,Same cell from a UK reseller,Phidgets,FRC4165_0 (RobotShop SKU RB-Phi-951),1,52.31,GBP,unknown,RobotShop UK,product page,2026-11-16,In stock 2026-11-12; import VAT and duties apply; check eu.robotshop.com for an EU-shipped listing,Sensor (alternative source)
+LC2,Not selected: TAS501-200kg,HT Sensor (sold as SparkFun SEN-14282),TAS501-200kg,0,90.87,EUR,excl,DigiKey FR,search snippet,2026-11-16,Kept as a documented fallback,Sensor (fallback)
+BT1,LiPo 3.7 V 400 mAh with protection and JST-PH lead (Adafruit polarity),Adafruit,3898,1,,USD,,Adafruit or EU reseller,NOT VERIFIED,,Buy from the same vendor family as U1: polarity differs between vendors,Battery
+W1,STEMMA QT / Qwiic cable 100 mm,Adafruit,4210,1,,USD,,Adafruit or EU reseller,NOT VERIFIED,,,U1 to U2
+H1,Lifting eye bolt DIN 580 M12 x 1.75 (WLL 340 kg; C15E; CE marked),any CE-marked maker,DIN 580 M12,2,,EUR,,French industrial supplier (Prolians / Legallais / HPC),NOT VERIFIED (rating verified; price not found),,Standard coarse pitch matches the cell thread M12 x 1.75,Load path
+H2,Thin hex nut M12 DIN 439 (lock nut),any,DIN 439 M12,2,,EUR,,hardware store,NOT VERIFIED,,,Locks eye bolt depth
+E1,Small ABS project box about 80 x 50 x 25 mm or printed shell,tbd,tbd,1,,EUR,,tbd,NOT VERIFIED,,Not designed yet,Protects electronics (not load bearing)
+C1,USB-C data cable,any,,1,,EUR,,owned,,,,Flashing and charging

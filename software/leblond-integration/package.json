@@ -1,0 +1,12 @@
+{
+  "name": "@fenrir/client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FENRIR protocol client and device abstraction for LeBlond (no runtime dependencies)",
+  "type": "module",
+  "license": "MIT",
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "test": "node --test \"test/*.test.ts\""
+  }
+}
