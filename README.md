@@ -72,7 +72,15 @@ Firmware host tests need gcc and make. With Docker:
 docker run --rm -v "$PWD:/w" -w /w/firmware/tests gcc:13 make test
 ```
 
-## Licences (proposed, see decision D-014)
+## Licences
 
-Hardware: CERN-OHL-P v2 · Firmware and software: MIT · Documentation: CC BY 4.0.
-Licence files will be added once the owner confirms the choice.
+Confirmed by the owner on 2026-11-16 (decision D-014).
+
+| Content | Licence | Text |
+|---|---|---|
+| Firmware, software, tests, build files (`firmware/`, `software/`, `tests/`) | MIT | [LICENSE](LICENSE) |
+| Hardware and mechanical design (`hardware/`, `mechanical/`) | CERN-OHL-P v2 | [LICENSES/CERN-OHL-P-2.0.txt](LICENSES/CERN-OHL-P-2.0.txt) |
+| Documentation and protocol specification (`docs/`, `protocol/`, README files) | CC BY 4.0 | [LICENSES/CC-BY-4.0.txt](LICENSES/CC-BY-4.0.txt) |
+
+All three exclude any warranty. None of them makes FENRIR safety equipment: see the notice at the
+top of this file.
