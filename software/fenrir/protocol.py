@@ -11,7 +11,13 @@ from dataclasses import dataclass, field
 from enum import IntEnum, IntFlag
 
 PROTOCOL_MAJOR = 1
-PROTOCOL_MINOR = 0
+PROTOCOL_MINOR = 1
+
+# Protocol 1.1 rates (ADS1220 turbo mode). SET_RATE still accepts the 1.0 values 80 and 320 and
+# the device maps them; Status always reports the real rate.
+RATE_LOW = 90
+RATE_HIGH = 350
+LEGACY_RATES = {80: RATE_LOW, 320: RATE_HIGH}
 
 _BASE = "f3e7{:04x}-6b1d-4c8a-9e2f-5a1c0d7e4b90"
 UUID_SERVICE = _BASE.format(1)
@@ -264,7 +270,8 @@ def parse_command(data: bytes) -> tuple[Result, Command | None]:
         if len(p) != 2:
             return Result.BAD_LENGTH, None
         sps = struct.unpack("<H", p)[0]
-        if sps not in (80, 320):
+        sps = LEGACY_RATES.get(sps, sps)
+        if sps not in (RATE_LOW, RATE_HIGH):
             return Result.BAD_PARAM, None
         return Result.OK, Command(op, {"sps": sps})
     if op == Op.SET_FILTER:

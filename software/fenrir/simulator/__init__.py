@@ -17,10 +17,12 @@ from .. import protocol as P
 Profile = Callable[[float], float]  # time (s) -> applied force (N)
 
 # Datasheet-derived defaults (see docs/architecture/feasibility.md §4):
-# TAS501: 2.0 mV/V at capacity; NAU7802: gain 128, ratiometric, 24-bit bipolar.
+# Cell: 2.0 mV/V at capacity; ADS1220 (D-024): gain 128, ratiometric, 24-bit bipolar
+# (same code scale as the NAU7802 used before).
 NOMINAL_COUNTS_PER_N = 2.0e-3 * 128 * 2**23 / 2000.0  # ~1073.7
-# 150 nV RMS input-referred (80 SPS, gain 128, datasheet headline) on a 3.0 V
-# reference -> counts RMS. Assumption until measured on the real board.
+# 0.15 uV RMS input-referred (ADS1220 turbo mode, 90 SPS, gain 128, typical) on a 3.0 V
+# reference -> counts RMS; the same figure applies to the simulator at any rate (the
+# ADS1220 gives 0.28 uV at 350 SPS). Assumption until measured on the real board.
 NOISE_COUNTS_RMS_80SPS = 150e-9 * 128 / 3.0 * 2**23  # ~53.7
 
 
@@ -127,7 +129,7 @@ class MockDevice:
     OVERLOAD_CN = 220_000
     STUCK_SAMPLES = 40
 
-    def __init__(self, profile: Profile, cell: LoadCellModel | None = None, *, sample_rate: int = 80,
+    def __init__(self, profile: Profile, cell: LoadCellModel | None = None, *, sample_rate: int = P.RATE_LOW,
                  rate_error: float = 0.0, att_mtu: int = 247, faults: Faults | None = None,
                  cal: P.CalInfo | None = None, seed: int = 7) -> None:
         self.profile = profile

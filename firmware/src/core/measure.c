@@ -42,7 +42,7 @@ uint16_t fenrir_crc16(const uint8_t *data, size_t len)
 void fenrir_config_defaults(fenrir_config_t *cfg)
 {
     fenrir_cal_set_nominal(&cfg->cal);
-    cfg->sample_rate = 80;
+    cfg->sample_rate = FENRIR_RATE_LOW;
     cfg->filter_type = FENRIR_FILTER_NONE;
     cfg->filter_param = 0;
 }
@@ -97,7 +97,7 @@ bool fenrir_config_deserialize(fenrir_config_t *cfg, const uint8_t *b, size_t le
     t.filter_param = b[27];
     float a = fabsf(t.cal.scale_n_per_count);
     if (!(a == a) || a < 1e-6f || a > 10.0f) return false;
-    if (t.sample_rate != 80 && t.sample_rate != 320) return false;
+    if (t.sample_rate != FENRIR_RATE_LOW && t.sample_rate != FENRIR_RATE_HIGH) return false;
     if (t.filter_type > FENRIR_FILTER_IIR || t.cal.valid > 1) return false;
     *cfg = t;
     return true;

@@ -1,0 +1,18 @@
+ref,item,manufacturer,part_number,qty,unit_price,currency,vat,supplier,price_source,price_date,stock_note,required_for
+LC1,Steel S-Type Load Cell 200 kg (C3); M12; IP68; 3 m cable,Phidgets (cell made by Ningbo ANE; model ST01),FRC4165_0,1,50.00,USD,excl,Phidgets direct (Canada),manufacturer product page,2026-11-16,124 in stock; 5+ US$48; 10+ US$46; shipping and French import VAT on top,Sensor
+H1,Lifting eye bolt DIN 580 M12 x 1.75 (WLL 340 kg; C15E; CE marked),any CE-marked maker,DIN 580 M12,2,,EUR,,French industrial supplier (Prolians / Legallais / HPC),NOT VERIFIED (rating verified; price not found),,Standard coarse pitch matches the cell thread M12 x 1.75,Load path
+H2,Thin hex nut M12 DIN 439 (lock nut),any,DIN 439 M12,2,,EUR,,hardware store,NOT VERIFIED,,,Locks eye bolt depth
+PCB1,FENRIR main board 46 x 38 mm 4-layer; assembled one side by the manufacturer (parts U1-U6 J1-J3 below),PCB assembler (tbd),FENRIR PCB rev A (not designed yet),1,,EUR,,tbd,NOT VERIFIED,,No schematic yet; quote only after ERC/DRC and DFM,Electronics
+U1,MCU + BLE module 4 MB flash; PCB antenna,Espressif,ESP32-C6-MINI-1-N4 (to confirm),1,,EUR,,assembler library,NOT VERIFIED,,Fallback ESP32-C6-MINI-1U (risk R-14),PCB1
+U2,24-bit delta-sigma ADC; PGA 1-128; SPI; TSSOP-16,Texas Instruments,ADS1220IPWR (to confirm),1,,EUR,,assembler library,NOT VERIFIED,,D-024 accepted 2026-11-17; replaces NAU7802,PCB1
+U3,Low-noise LDO 3.0 V 250 mA; SOT-23-5,Texas Instruments,LP5907MFX-3.0/NOPB (to confirm),1,,EUR,,assembler library,NOT VERIFIED,,Analog rail and bridge excitation,PCB1
+U4,LDO 3.3 V 1 A; SOT-23-5,Texas Instruments,TLV75733PDBVR (to confirm),1,,EUR,,assembler library,NOT VERIFIED,,To size from the module datasheet,PCB1
+U5,Li-ion charger single cell; SOT-23-5,Microchip,MCP73831T-2ACI/OT (to confirm),1,,EUR,,assembler library,NOT VERIFIED,,,PCB1
+U6,Fuel gauge single cell; I2C,Analog Devices (Maxim),MAX17048G+T10 (to confirm),1,,EUR,,assembler library,NOT VERIFIED,,Datasheet not read yet,PCB1
+J1,USB-C receptacle 16-pin USB 2.0,tbd,tbd,1,,EUR,,assembler library,NOT VERIFIED,,,PCB1
+J2,JST-PH 2-pin battery connector,JST,tbd,1,,EUR,,assembler library,NOT VERIFIED,,Polarity marked on the board; check battery lead before plugging (R-09),PCB1
+J3,5-way spring terminal for the bridge (E+ E- A+ A- shield),tbd,tbd,1,,EUR,,assembler library,NOT VERIFIED,,Height <= 5 mm,PCB1
+BT1,LiPo 3.7 V about 400 mAh with protection circuit and JST-PH lead; max 30 x 35 x 5 mm,tbd,tbd,1,,EUR,,tbd,NOT VERIFIED,,Must fit the enclosure bay; lead polarity must match J2,Battery
+E1,3D-printed enclosure concept A rev C: back shell + front shell + front plate + button cap; MJF PA12 graphite,printing service (tbd),FENRIR enclosure A rev C (detail design; not released),1,,EUR,,tbd,NOT VERIFIED,,Parts list in mechanical/enclosure-a.md; order only after the received parts are measured,Protects electronics (not load bearing)
+E2,Screw M2 x 10 thread-forming for plastics; pan head; Torx,any,tbd,4,,EUR,,tbd,NOT VERIFIED,,Pilot hole 1.7 mm to confirm with the screw maker,Closes the enclosure
+C1,USB-C data cable,any,,1,,EUR,,owned,,,,Flashing and charging

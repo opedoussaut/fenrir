@@ -10,21 +10,21 @@ S = P.Status
 
 
 def test_force_raw_matches_firmware_vector():
-    pkt = P.ForcePacket(7, 1234567890, 12500, S.STREAMING | S.CAL_VALID | S.TARED, P.Format.RAW_FORCE,
+    pkt = P.ForcePacket(7, 1234567890, 11111, S.STREAMING | S.CAL_VALID | S.TARED, P.Format.RAW_FORCE,
                         (1000, 108374, -5, 8388607), (0, 10000, -1, None))
     assert pkt.encode().hex() == VECTORS["force_raw"]
     assert P.ForcePacket.decode(bytes.fromhex(VECTORS["force_raw"])) == pkt
 
 
 def test_force_only_matches_firmware_vector():
-    pkt = P.ForcePacket(65535, 1234567890, 3125, S.STREAMING | S.OVERLOAD | S.FILTERED, P.Format.FORCE,
+    pkt = P.ForcePacket(65535, 1234567890, 2857, S.STREAMING | S.OVERLOAD | S.FILTERED, P.Format.FORCE,
                         (), (0, 10000, -1, None))
     assert pkt.encode().hex() == VECTORS["force_only"]
     assert P.ForcePacket.decode(bytes.fromhex(VECTORS["force_only"])) == pkt
 
 
 def test_status_and_calinfo_match_firmware_vectors():
-    st = P.DeviceStatus(P.State.STREAMING, 0, S.STREAMING | S.CAL_VALID, 87, 4012, 80, P.Filter.IIR, 2, 3600)
+    st = P.DeviceStatus(P.State.STREAMING, 0, S.STREAMING | S.CAL_VALID, 87, 4012, 90, P.Filter.IIR, 2, 3600)
     assert st.encode().hex() == VECTORS["status"]
     assert P.DeviceStatus.decode(bytes.fromhex(VECTORS["status"])) == st
     ci = P.CalInfo(True, 5, 490, 15625 / 2**24, -20000, 150, 1794000000)
@@ -62,7 +62,9 @@ def test_malformed_force_packets_are_rejected(data):
     (bytes([P.Op.START, 0, 0]), P.Result.BAD_PARAM),
     (bytes([P.Op.START, 5, 4]), P.Result.BAD_PARAM),
     (bytes([P.Op.START, 0]), P.Result.BAD_LENGTH),
-    (P.cmd_set_rate(320), P.Result.OK),
+    (P.cmd_set_rate(350), P.Result.OK),
+    (P.cmd_set_rate(90), P.Result.OK),
+    (P.cmd_set_rate(320), P.Result.OK),  # protocol 1.0 value, mapped to 350
     (P.cmd_set_rate(100), P.Result.BAD_PARAM),
     (P.cmd_set_filter(P.Filter.MOVING_AVG, 1), P.Result.BAD_PARAM),
     (P.cmd_set_filter(P.Filter.IIR, 3), P.Result.OK),

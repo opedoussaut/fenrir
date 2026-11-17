@@ -22,7 +22,7 @@ Nothing in this repository is *measured* or *validated* yet: no hardware exists.
 | F-01 | Measure tension with a strain-gauge load cell. |
 | F-02 | Report force in N; applications also show kgf (÷ 9.80665) and lbf (÷ 4.4482216152605). |
 | F-03 | Timestamp every sample with the device clock; report the real sample period. |
-| F-04 | Deliver at least 80 real samples per second; 320 SPS available as an option. |
+| F-04 | Deliver at least 80 real samples per second (90 SPS nominal); 350 SPS available as an option. Rates changed from 80 / 320 with the ADS1220 (D-024). |
 | F-05 | Stream over Bluetooth LE with a documented, versioned protocol. |
 | F-06 | Tare on command; refuse to tare while the load is changing. |
 | F-07 | Store calibration persistently with integrity check; expose its status and verified range. |
@@ -43,16 +43,16 @@ that rating. See [mechanical load path](../architecture/mechanical-load-path.md)
 
 | ID | Quantity | Acceptance limit (target) | Why this number | Needs |
 |---|---|---|---|---|
-| M-01 | Noise at rest, 80 SPS, unfiltered | ≤ 0.15 N RMS | Estimate is 0.05 N RMS (below); 3× margin for board and cable pickup | device only |
-| M-02 | Noise at rest, 320 SPS | ≤ 0.4 N RMS | No datasheet figure at 320 SPS; to be characterised, limit may move | device only |
-| M-03 | Sample rate | 80 SPS ± 3 % real, and reported period within 0.5 % of true | ADC runs on an untrimmed RC oscillator | PC clock, 10 min run |
+| M-01 | Noise at rest, 90 SPS, unfiltered | ≤ 0.15 N RMS | Estimate is 0.05 N RMS (below); 3× margin for board and cable pickup | device only |
+| M-02 | Noise at rest, 350 SPS | ≤ 0.3 N RMS | Estimate 0.09 N RMS from the ADS1220 turbo-mode table; 3× margin | device only |
+| M-03 | Sample rate | 90 SPS ± 3 % real, and reported period within 0.5 % of true | ADS1220 internal oscillator is specified at 2 % | PC clock, 10 min run |
 | M-04 | Accuracy inside the home-calibrated span | ± (0.5 % of reading + 1 N) | Dominated by how well the reference masses are known | weighed masses |
 | M-05 | Accuracy over the full range | ± 0.5 % of 2000 N (± 10 N) | Achievable only with a calibrated reference; Tindeq claims 0.25 % FS | **external lab or calibrated reference cell** |
 | M-06 | Repeatability (same load, 5 applications) | ≤ 0.1 % FS (2 N) | Cell datasheet: 0.03 % FS; margin for the hardware stack | masses |
 | M-07 | Hysteresis (up vs. down at matched loads) | ≤ 0.1 % FS (2 N) | Cell datasheet: 0.03 % FS | masses |
 | M-08 | Zero drift, 30 min after 5 min warm-up, constant temperature | ≤ 1 N | Cell: 0.023 % FS / 10 °C = 0.46 N / 10 °C | device only |
 | M-09 | Creep at constant load, 30 min | ≤ 1 N at ≥ 300 N | Cell: 0.024 % FS / 30 min = 0.5 N at capacity | masses |
-| M-10 | Step response / bandwidth | Report the 10–90 % rise time for a load release; no limit yet | NAU7802 −3 dB bandwidth is not stated for 80 SPS in the datasheet text we could read | drop-release rig |
+| M-10 | Step response / bandwidth | Report the 10–90 % rise time for a load release; no limit yet | ADS1220 Table 8-4 gives −3 dB bandwidths; the turbo-mode rows did not survive text extraction (normal mode: 39.6 Hz at 90 SPS, 150 Hz at 330 SPS) | drop-release rig |
 | M-11 | Wireless latency (sample to application) | ≤ 100 ms at batch 4 | 50 ms batching + connection interval | LED/photodiode or audio sync |
 | M-12 | Notification loss at 2 m, line of sight | ≤ 1 %, and 100 % of losses detected by the client | Loss is acceptable if visible | 10 min run |
 
@@ -61,8 +61,10 @@ that rating. See [mechanical load path](../architecture/mechanical-load-path.md)
 Estimate, datasheet values only:
 
 - Cell output: 2.0 mV/V × 3.0 V excitation = **6.0 mV at capacity**.
-- NAU7802 input-referred noise at 80 SPS, gain 128: **150 nV RMS** (datasheet headline).
-- 150 nV / 6.0 mV = 25 ppm of capacity = **0.05 N RMS**, about 0.3 N peak-to-peak.
+- ADS1220 input-referred noise, gain 128, turbo mode: **0.15 µV RMS at 90 SPS**, 0.28 µV at 350 SPS
+  (TI SBAS501D noise table, typical, inputs shorted). The NAU7802 used before D-024 quotes 150 nV at 80 SPS.
+- 0.15 µV / 6.0 mV = 25 ppm of capacity = **0.05 N RMS** at 90 SPS (0.09 N RMS at 350 SPS), about 0.3 N
+  peak-to-peak.
 - Noise-free resolution ≈ 6.0 mV / (6.6 × 150 nV) ≈ 6 000 steps ≈ **12.6 bits**, not 24.
 
 And resolution is not accuracy: the cell's own combined error (0.03 % FS = 0.6 N, specified at 9–12 V

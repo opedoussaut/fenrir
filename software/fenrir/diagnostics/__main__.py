@@ -106,7 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     src.add_argument("--ble", action="store_true", help="connect to a real device")
     ap.add_argument("--seconds", type=float, default=8.0)
     ap.add_argument("--dwell", type=float, help="record this many seconds and print raw-count statistics")
-    ap.add_argument("--rate", type=int, default=80, choices=(80, 320))
+    ap.add_argument("--rate", type=int, default=P.RATE_LOW, choices=(P.RATE_LOW, P.RATE_HIGH))
     ap.add_argument("--loss", type=float, default=0.0, help="simulated notification loss probability")
     ap.add_argument("--peak", type=float, default=450.0, help="simulated pull peak, N")
     ap.add_argument("--name", help="BLE device name, e.g. FENRIR-1A2B")

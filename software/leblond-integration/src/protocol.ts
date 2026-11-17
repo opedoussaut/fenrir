@@ -5,6 +5,11 @@
  */
 
 export const PROTOCOL_MAJOR = 1;
+export const PROTOCOL_MINOR = 1;
+
+/** Protocol 1.1 rates (ADS1220 turbo mode). Read the real rate from Status. */
+export const RATE_LOW = 90;
+export const RATE_HIGH = 350;
 
 const uuid = (n: number) => `f3e7${n.toString(16).padStart(4, "0")}-6b1d-4c8a-9e2f-5a1c0d7e4b90`;
 export const UUID = {
@@ -183,5 +188,5 @@ export function decodeResponse(b: Uint8Array): { op: number; result: number } {
 
 export const cmdStart = (format: Format = Format.RAW_FORCE, batch = 4) => Uint8Array.of(Op.START, format, batch);
 export const cmdSimple = (op: number) => Uint8Array.of(op);
-export const cmdSetRate = (sps: 80 | 320) => Uint8Array.of(Op.SET_RATE, sps & 0xff, sps >> 8);
+export const cmdSetRate = (sps: typeof RATE_LOW | typeof RATE_HIGH) => Uint8Array.of(Op.SET_RATE, sps & 0xff, sps >> 8);
 export const cmdSetFilter = (type: 0 | 1 | 2, param = 0) => Uint8Array.of(Op.SET_FILTER, type, param);

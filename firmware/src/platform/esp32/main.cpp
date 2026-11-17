@@ -2,19 +2,25 @@
  * FENRIR — ESP32 (Arduino core 3.x + NimBLE-Arduino 2.x) platform layer.
  *
  * Everything that decides a measurement lives in the portable core
- * (src/core, host-tested). This file only wires it to I2C, flash and BLE.
+ * (src/core, host-tested). This file only wires it to SPI (ADS1220), I2C
+ * (MAX17048 fuel gauge), flash and BLE.
+ *
+ * Target: the FENRIR PCB (ESP32-C6-MINI-1 + ADS1220, decisions D-023 to D-025).
+ * Pin numbers follow hardware/pcb-design.md and are provisional until the
+ * schematic exists.
  *
  * STATUS: not yet executed on hardware. Do not treat as validated.
  */
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <Preferences.h>
+#include <SPI.h>
 #include <Wire.h>
 #include <esp_sleep.h>
 
 extern "C" {
+#include "fenrir/ads1220.h"
 #include "fenrir/measure.h"
-#include "fenrir/nau7802.h"
 #include "fenrir/protocol.h"
 }
 
@@ -28,10 +34,13 @@ extern "C" {
 namespace {
 
 constexpr uint32_t kI2cHz = 400000;
+constexpr uint32_t kSpiHz = 2000000;         // well inside the ADS1220 SCLK limit
+constexpr int kPinSclk = 21, kPinMosi = 22, kPinMiso = 23, kPinCs = 20, kPinDrdy = 2;
+constexpr int kPinSda = 6, kPinScl = 7;
 constexpr uint32_t kAdcTimeoutMs = 100;      // no conversion for this long -> ADC_TIMEOUT
 constexpr int32_t kOverloadCn = 220000;      // 2200 N: 110 % of the nominal range
 constexpr int32_t kMaxSlewCn = 100000;       // 1000 N between consecutive samples
-constexpr uint16_t kStuckSamples = 40;       // identical codes (0.5 s at 80 SPS)
+constexpr uint16_t kStuckSamples = 40;       // identical codes (0.44 s at 90 SPS, 0.11 s at 350 SPS)
 constexpr uint16_t kTareSamples = 40;
 constexpr int32_t kTareMaxSpanCounts = 2200; // ~2 N at the nominal scale
 constexpr uint32_t kIdleSleepMs = 10UL * 60UL * 1000UL;
@@ -43,7 +52,7 @@ fenrir_config_t cfg;
 fenrir_filter_t filter;
 fenrir_guard_t guard;
 fenrir_tare_t tare;
-nau7802_bus_t adcBus;
+ads1220_bus_t adcBus;
 
 NimBLECharacteristic *chForce, *chControl, *chStatus, *chCal, *chBattery;
 bool connected = false;
@@ -67,27 +76,28 @@ uint8_t batteryPct = FENRIR_BATTERY_UNKNOWN;
 uint16_t batteryMv = 0;
 
 // Control-point writes arrive on the BLE task; hand them to loop() so that all
-// I2C and state changes happen on one thread.
+// bus and state changes happen on one thread.
 portMUX_TYPE cmdMux = portMUX_INITIALIZER_UNLOCKED;
 uint8_t pendingCmd[20];
 size_t pendingLen = 0;
 
-// ---- I2C HAL for the NAU7802 driver ---------------------------------------
-bool i2cRead(void *, uint8_t reg, uint8_t *buf, size_t len) {
-  Wire.beginTransmission(NAU7802_I2C_ADDR);
-  Wire.write(reg);
-  if (Wire.endTransmission(false) != 0) return false;
-  if (Wire.requestFrom((uint8_t)NAU7802_I2C_ADDR, (uint8_t)len) != len) return false;
-  for (size_t i = 0; i < len; i++) buf[i] = (uint8_t)Wire.read();
-  return true;
+// ---- SPI HAL for the ADS1220 driver ----------------------------------------
+// SPI mode 1 (CPOL 0, CPHA 1). CS is held low for one whole command or read.
+bool spiTransfer(void *, const uint8_t *tx, uint8_t *rx, size_t len) {
+  SPI.beginTransaction(SPISettings(kSpiHz, MSBFIRST, SPI_MODE1));
+  digitalWrite(kPinCs, LOW);
+  delayMicroseconds(1); // td(CSSC) >= 50 ns
+  for (size_t i = 0; i < len; i++) {
+    uint8_t v = SPI.transfer(tx[i]);
+    if (rx) rx[i] = v;
+  }
+  delayMicroseconds(1); // td(SCCS) >= 25 ns
+  digitalWrite(kPinCs, HIGH);
+  SPI.endTransaction();
+  return true; // SPI has no acknowledge; the driver verifies by register read-back
 }
-bool i2cWrite(void *, uint8_t reg, uint8_t value) {
-  Wire.beginTransmission(NAU7802_I2C_ADDR);
-  Wire.write(reg);
-  Wire.write(value);
-  return Wire.endTransmission() == 0;
-}
-void i2cDelay(void *, uint32_t ms) { delay(ms); }
+bool spiDataReady(void *) { return digitalRead(kPinDrdy) == LOW; }
+void spiDelayUs(void *, uint32_t us) { delayMicroseconds(us); }
 
 // ---- Battery (MAX17048 fuel gauge) -----------------------------------------
 void readBattery() {
@@ -243,7 +253,7 @@ void handleCommand(const uint8_t *data, size_t len) {
       break;
     case FENRIR_OP_SET_RATE:
       if (state == FENRIR_STATE_STREAMING) return respond(op, FENRIR_RES_BAD_STATE);
-      if (!adcOk || nau7802_set_rate(&adcBus, cmd.u.rate.sps) != NAU7802_OK)
+      if (!adcOk || ads1220_set_rate(&adcBus, cmd.u.rate.sps) != ADS1220_OK)
         return respond(op, FENRIR_RES_HW_ERROR);
       cfg.sample_rate = cmd.u.rate.sps;
       periodUsQ8 = (1000000UL / cfg.sample_rate) << 8;
@@ -278,8 +288,8 @@ void handleCommand(const uint8_t *data, size_t len) {
     case FENRIR_OP_SLEEP:
       respond(op, FENRIR_RES_OK);
       delay(100);
-      nau7802_power_down(&adcBus);
-      esp_deep_sleep_start(); // wake by reset button / USB power cycle (proto-A)
+      ads1220_power_down(&adcBus);
+      esp_deep_sleep_start(); // wake source (button on GPIO3) not wired in firmware yet
       return;
   }
   respond(op, FENRIR_RES_OK);
@@ -402,14 +412,19 @@ void setup() {
   prefs.begin("fenrir", false);
   loadConfig();
 
-  Wire.begin();
+  Wire.begin(kPinSda, kPinScl);
   Wire.setClock(kI2cHz);
-  adcBus = {nullptr, i2cRead, i2cWrite, i2cDelay};
-  nau7802_result_t r = nau7802_init(&adcBus, cfg.sample_rate);
-  if (r != NAU7802_OK) {
+  pinMode(kPinCs, OUTPUT);
+  digitalWrite(kPinCs, HIGH);
+  pinMode(kPinDrdy, INPUT_PULLUP);
+  SPI.begin(kPinSclk, kPinMiso, kPinMosi, kPinCs);
+  delay(5); // supplies settle and the ADS1220 power-up reset completes (>= 50 us)
+  adcBus = {nullptr, spiTransfer, spiDataReady, spiDelayUs};
+  ads1220_result_t r = ads1220_init(&adcBus, cfg.sample_rate);
+  if (r != ADS1220_OK) {
     configFlags |= FENRIR_ST_ADC_FAULT;
     lastError = FENRIR_RES_HW_ERROR;
-    Serial.printf("NAU7802 init failed: %d\n", (int)r);
+    Serial.printf("ADS1220 init failed: %d\n", (int)r);
   }
   periodUsQ8 = (1000000UL / cfg.sample_rate) << 8;
   fenrir_filter_init(&filter, cfg.filter_type, cfg.filter_param);
@@ -440,10 +455,10 @@ void loop() {
   uint32_t nowMs = millis();
   if (!(configFlags & FENRIR_ST_ADC_FAULT)) {
     int32_t raw;
-    nau7802_result_t r = nau7802_read(&adcBus, &raw);
-    if (r == NAU7802_OK) {
+    ads1220_result_t r = ads1220_read(&adcBus, &raw);
+    if (r == ADS1220_OK) {
       onSample(raw, micros());
-    } else if (r == NAU7802_ERR_BUS || nowMs - lastSampleMs > kAdcTimeoutMs) {
+    } else if (r == ADS1220_ERR_BUS || nowMs - lastSampleMs > kAdcTimeoutMs) {
       stickyFlags |= FENRIR_ST_ADC_TIMEOUT;
       if (tare.active) {
         tare.active = false;
@@ -451,7 +466,7 @@ void loop() {
       }
       if (nowMs - lastSampleMs > 1000) { // try to recover a hung ADC once a second
         lastSampleMs = nowMs;
-        if (nau7802_init(&adcBus, cfg.sample_rate) != NAU7802_OK) lastError = FENRIR_RES_HW_ERROR;
+        if (ads1220_init(&adcBus, cfg.sample_rate) != ADS1220_OK) lastError = FENRIR_RES_HW_ERROR;
         publishStatus(true);
       }
     }
@@ -464,8 +479,8 @@ void loop() {
   }
   if (connected || state == FENRIR_STATE_STREAMING) lastActivityMs = nowMs;
   if (nowMs - lastActivityMs > kIdleSleepMs) {
-    nau7802_power_down(&adcBus);
+    ads1220_power_down(&adcBus);
     esp_deep_sleep_start();
   }
-  delayMicroseconds(300); // poll the ADC ready bit at ~2 kHz; yields to the BLE stack
+  delayMicroseconds(300); // poll DRDY at ~2 kHz (350 SPS needs < 2.9 ms); yields to the BLE stack
 }

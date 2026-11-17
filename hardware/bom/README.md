@@ -1,10 +1,22 @@
 # Bill of materials
 
-[`prototype-bom.csv`](prototype-bom.csv) is the Phase 2 (Option A, no soldering) purchasing list.
-**Nothing has been ordered.** Every price carries its source and date; rows marked `NOT VERIFIED` have
-no price found on 2026-11-16 and must be checked before ordering.
+FENRIR is **one product** (decision D-023, 2026-11-17): the custom PCB in the concept A enclosure.
+[`product-bom.csv`](product-bom.csv) is its parts list. **Nothing has been ordered.** Every price carries
+its source and date; `NOT VERIFIED` means no price was found or checked.
 
-Load cell selected by the owner on 2026-11-16: **Phidgets FRC4165_0** (decision D-016).
+Only the load cell is priced today (Phidgets FRC4165_0, US$50 on 2026-11-16, decision D-016). The board
+cannot be quoted before its schematic and layout exist and pass ERC/DRC; the enclosure cannot be quoted
+before a printing service is chosen. **No total is given**, because a total built mostly from
+assumptions would look more certain than it is.
+
+Part numbers marked "(to confirm)" are the intended parts; each is checked against its datasheet and
+the assembler's library in the schematic step.
+
+## Superseded: modular prototype list
+
+[`prototype-bom.csv`](prototype-bom.csv) is the Phase 2 Option A list (Adafruit Feather + NAU7802
+breakout). It is **not to be ordered**: D-023 dropped the modular prototype. It is kept as a record of
+the prices found on 2026-11-16. The sections below describe that list.
 
 ## Expected prototype cost (parts only)
 
@@ -20,12 +32,12 @@ The euro value of the US-dollar price is not converted here: no exchange rate wa
 | STEMMA QT cable | ~€1 | assumption |
 | 2 × eye bolt DIN 580 M12 | ~€10 | assumption |
 | 2 × M12 thin nut | ~€1 | assumption |
-| Project box | ~€8 | assumption |
-| **Total** | **US$50 + ~€47** | roughly €90–95 at parity-like rates |
+| 3D-printed enclosure (service) | not priced | NOT VERIFIED; the earlier ~€8 box assumption no longer applies |
+| **Total without enclosure** | **US$50 + ~€39** | the printed enclosure is not priced and will take the total past €100 |
 
 On top: shipping from three sellers, French VAT (20 %) on excl.-VAT prices, and import VAT plus
 carrier fees on the load cell if it ships from Canada or the UK. **Landed cost will exceed the €100
-target** even though the parts subtotal is just under it. Buying the cell from an EU-shipping reseller
+target** once the printed enclosure is added. Buying the cell from an EU-shipping reseller
 would remove the import step; none was confirmed today.
 
 ## Quantity 1 / 5 / 10

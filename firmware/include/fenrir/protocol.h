@@ -14,7 +14,12 @@ extern "C" {
 #endif
 
 #define FENRIR_PROTOCOL_MAJOR 1
-#define FENRIR_PROTOCOL_MINOR 0
+#define FENRIR_PROTOCOL_MINOR 1
+
+/* Sample rates (protocol 1.1: ADS1220 turbo-mode rates). SET_RATE still accepts the 1.0 values
+ * 80 and 320 and maps them to these; Status always reports the real rate. */
+#define FENRIR_RATE_LOW  90
+#define FENRIR_RATE_HIGH 350
 
 /* 128-bit UUIDs: f3e7XXXX-6b1d-4c8a-9e2f-5a1c0d7e4b90 */
 #define FENRIR_UUID_SERVICE     "f3e70001-6b1d-4c8a-9e2f-5a1c0d7e4b90"
@@ -80,7 +85,7 @@ enum {
     FENRIR_OP_STOP       = 0x02,
     FENRIR_OP_TARE       = 0x03,
     FENRIR_OP_CLEAR_TARE = 0x04,
-    FENRIR_OP_SET_RATE   = 0x05, /* sps u16: 80 or 320 */
+    FENRIR_OP_SET_RATE   = 0x05, /* sps u16: 90 or 350 (80/320 mapped) */
     FENRIR_OP_SET_FILTER = 0x06, /* type u8, param u8 */
     FENRIR_OP_CAL_WRITE  = 0x10, /* scale f32, zero i32, max_ref_n u16, n_points u8, unix u32 */
     FENRIR_OP_CAL_CLEAR  = 0x11,

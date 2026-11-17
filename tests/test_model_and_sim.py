@@ -30,8 +30,8 @@ def test_units():
 def test_clean_stream_has_no_loss_and_true_rate():
     rec = record(calibrated_device(rest(), rate_error=0.012), 10)
     assert rec.stats.lost_packets == 0 and rec.stats.lost_samples_est == 0
-    # the ADC runs 1.2 % fast; the recording must show the real rate, not 80.0
-    assert rec.measured_rate_hz() == pytest.approx(80 * 1.012, rel=2e-3)
+    # the ADC runs 1.2 % fast; the recording must show the real rate, not 90.0
+    assert rec.measured_rate_hz() == pytest.approx(90 * 1.012, rel=2e-3)
     assert rec.calibrated and not rec.filtered
 
 
@@ -97,7 +97,7 @@ def test_stuck_adc_and_dropout_are_reported():
     assert any(s.flags & P.Status.ADC_STUCK for s in rec.samples)
     rec = record(calibrated_device(rest(), faults=Faults(dropout_between=(1.0, 1.5))), 3)
     assert any(s.flags & P.Status.ADC_TIMEOUT for s in rec.samples)
-    assert rec.stats.lost_samples_est == pytest.approx(40, abs=2)  # 0.5 s of missing samples
+    assert rec.stats.lost_samples_est == pytest.approx(45, abs=2)  # 0.5 s of missing samples at 90 SPS
 
 
 def test_overload_is_flagged():
@@ -108,7 +108,7 @@ def test_overload_is_flagged():
 def test_small_mtu_falls_back_to_fewer_samples_per_packet():
     dev = calibrated_device(rest(), att_mtu=23)
     rec = record(dev, 1, batch=8)
-    assert dev.batch == 1 and rec.stats.samples == pytest.approx(80, abs=1)
+    assert dev.batch == 1 and rec.stats.samples == pytest.approx(90, abs=1)
 
 
 def test_tare_and_state_rules():
@@ -117,7 +117,7 @@ def test_tare_and_state_rules():
     rec = record(dev, 1)
     assert abs(np.mean([s.force_n for s in rec.samples])) < 0.05
     assert all(s.flags & P.Status.TARED for s in rec.samples)
-    assert dev.write_control(P.cmd_set_rate(320))[1] == P.Result.BAD_STATE  # not while streaming
+    assert dev.write_control(P.cmd_set_rate(350))[1] == P.Result.BAD_STATE  # not while streaming
     assert dev.write_control(P.cmd_cal_write(1e-3, 0, 400, 5, 0))[1] == P.Result.BAD_STATE
     moving = calibrated_device(max_pull(500, 0.0, 0.4, 2))
     assert moving.write_control(P.cmd_simple(P.Op.TARE))[1] == P.Result.BAD_STATE  # refuses to tare under load

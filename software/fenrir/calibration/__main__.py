@@ -27,7 +27,7 @@ def simulated_points(masses_kg: list[float], g: float, seed: int = 3) -> list[Ca
     for m, direction in seq:
         f = mass_to_force(m, g, 7850.0)
         vals = []
-        for _ in range(240):  # 3 s dwell at 80 SPS
+        for _ in range(270):  # 3 s dwell at 90 SPS
             vals.append(cell.counts(f, t))
             t += 1 / 80
         pts.append(CalPoint(f, float(np.mean(vals)), float(np.std(vals)), len(vals), direction, u_reference_n=0.0005 * f))

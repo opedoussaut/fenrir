@@ -149,7 +149,7 @@ numbers the PCB exists to improve.
 | ID | Risk / assumption | Consequence | Next step |
 |---|---|---|---|
 | R-01 | Calibration reference limited to ~400 N at home | Upper 80 % of range unverified | Find a lab or calibrated reference (V-05) |
-| R-02 | NAU7802 LDO near its current limit with a 350 Ω bridge | Excitation sag, extra noise or drift | Measure E+ under load; fall back to 2.7 V; external regulator on the PCB |
+| R-02 | NAU7802 LDO near its current limit with a 350 Ω bridge | Excitation sag, extra noise or drift | Closed by design if D-024 is accepted: the PCB drives the bridge from a separate LP5907-3.0 (ratiometric); still to measure E+ under load at board bring-up |
 | R-03 | Cell error figures quoted at 9–12 V, we use 3 V | Real non-linearity/hysteresis may differ | Characterise (V-06, V-07) |
 | R-04 | Load cell thread is M12 × 1.75 per its datasheet; usable thread depth is not published | Eye bolts may bottom out or engage too little | Measure the hole depth on receipt before loading |
 | R-05 | Device rating equals the cell's rating (200 kg ≈ 1961 N); two-handed pulls can exceed that | Overload of the cell | Overload flag at 2200 N; owner confirmed 200 kg (D-006), so loads above the cell's rating are out of scope and must be stated as such in the user documentation |
@@ -160,3 +160,5 @@ numbers the PCB exists to improve.
 | R-10 | Web Bluetooth absent on iOS | iPhone users cannot connect from the web app | Native bridge or WebBLE browser (integration spec) |
 | R-11 | No radio/EMC conformity work planned yet | Cannot be CE-marked or sold | Use a pre-certified module; assess before any distribution |
 | R-12 | Prices and stock move | BOM total drifts | Re-check at order time |
+| R-13 | No modular prototype (D-023): the first PCB is designed without measured noise, drift or current | A first spin may need rework or a second spin | Test points on every rail and on DRDY/SPI; solder-jumper options on the analog section; bare-board bench bring-up before the enclosure is ordered; order the smallest assembled quantity the manufacturer allows |
+| R-14 | ESP32-C6-MINI-1 antenna sits 4–5 mm in front of the steel cell | Short or uneven BLE range | Range test V-26 on the first board; fallback ESP32-C6-MINI-1U with an external antenna (board respin) |

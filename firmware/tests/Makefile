@@ -2,7 +2,7 @@ CC ?= gcc
 CFLAGS ?= -std=c11 -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Werror -O1 -g \
           -fsanitize=address,undefined -fno-sanitize-recover=all
 INC = -I../include
-CORE = ../src/core/protocol.c ../src/core/measure.c ../src/core/nau7802.c
+CORE = ../src/core/protocol.c ../src/core/measure.c ../src/core/nau7802.c ../src/core/ads1220.c
 VECTORS = ../../protocol/vectors/v1.txt
 BUILD ?= /tmp/fenrir-build
 

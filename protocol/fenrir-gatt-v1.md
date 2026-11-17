@@ -1,4 +1,4 @@
-# FENRIR GATT protocol — version 1.0
+# FENRIR GATT protocol — version 1.1
 
 Status: **draft, implemented in firmware core, Python and TypeScript; not yet exercised over a real BLE link.**
 
@@ -35,7 +35,7 @@ Minor versions only add things (new opcodes, new status bits, bytes appended to 
 |---:|---|---|---|
 | 0 | u16 | `seq` | Notification counter, +1 per packet, wraps. Reset to 0 by START. |
 | 2 | u32 | `t0_us` | Device clock at the first sample of the packet, µs. Wraps every 71.6 min. |
-| 6 | u16 | `dt_us` | Sample period **as measured by the device**, µs (≈12500 at 80 SPS, ≈3125 at 320 SPS). |
+| 6 | u16 | `dt_us` | Sample period **as measured by the device**, µs (≈11111 at 90 SPS, ≈2857 at 350 SPS). |
 | 8 | u16 | `status` | Status flags (below), OR-ed over the samples in this packet. |
 | 10 | u8 | `format` | 0 = raw + force, 1 = force only. |
 | 11 | u8 | `count` | Samples in this packet, 1–40. |
@@ -74,11 +74,11 @@ Sample, format 1: `i24 force` only.
 
 Payload per notification is `ATT_MTU − 3`. The device clamps the requested batch to what fits.
 
-| ATT MTU | Format | Max samples/packet | 80 SPS, batch 4 | 320 SPS, batch 16 |
+| ATT MTU | Format | Max samples/packet | 90 SPS, batch 4 | 350 SPS, batch 16 |
 |---:|---|---:|---|---|
-| 23 (no MTU exchange) | raw+force | 1 | 80 notif/s × 18 B = 1.4 kB/s | 320 notif/s — **not expected to be sustainable** |
-| 23 | force only | 2 | 40 notif/s × 18 B | 160 notif/s — marginal |
-| 247 | raw+force | 38 | 20 notif/s × 36 B = 0.72 kB/s | 20 notif/s × 108 B = 2.2 kB/s |
+| 23 (no MTU exchange) | raw+force | 1 | 90 notif/s × 18 B = 1.6 kB/s | 350 notif/s — **not expected to be sustainable** |
+| 23 | force only | 2 | 45 notif/s × 18 B | 175 notif/s — marginal |
+| 247 | raw+force | 38 | 22.5 notif/s × 36 B = 0.81 kB/s | 21.9 notif/s × 108 B = 2.4 kB/s |
 
 These are computed figures; real throughput and loss must be measured (tests V-10, V-11).
 
@@ -88,7 +88,7 @@ Loss is detected, never concealed:
 - the device sets `SAMPLE_DROPPED` when it knows it lost data on its side.
 
 Clients must keep the time axis from `t0_us`/`dt_us` and leave gaps as gaps (no interpolation, no
-re-spacing). Buffering latency is `batch / rate` (50 ms at batch 4, 80 SPS) plus the connection interval.
+re-spacing). Buffering latency is `batch / rate` (44 ms at batch 4, 90 SPS) plus the connection interval.
 
 ## Control point
 
@@ -101,7 +101,7 @@ One command at a time.
 | 0x02 | STOP | — | |
 | 0x03 | TARE | — | Averages 40 samples. Answer arrives after the window. `BAD_STATE` if the signal moved (not at rest). Tare is not persisted. |
 | 0x04 | CLEAR_TARE | — | |
-| 0x05 | SET_RATE | `sps u16` = 80 or 320 | Not while streaming. Persisted. |
+| 0x05 | SET_RATE | `sps u16` = 90 or 350 | Not while streaming. Persisted. The 1.0 values 80 and 320 are accepted and mapped to 90 and 350; Status `sample_rate` always reports the real rate. |
 | 0x06 | SET_FILTER | `type u8`, `param u8` | 0 none; 1 moving average of `param` (2–32) samples; 2 one-pole IIR, α = 2^−`param` (1–8). Persisted. |
 | 0x10 | CAL_WRITE | `scale f32` (N/count), `zero i32`, `max_ref_n u16`, `n_points u8` (≥ 2), `unix_time u32` | Not while streaming. Clears tare. Persisted with CRC. |
 | 0x11 | CAL_CLEAR | — | Back to the nominal scale; CAL_VALID clears. |
@@ -134,3 +134,11 @@ Results: 0 OK, 1 UNKNOWN_OP, 2 BAD_LENGTH, 3 BAD_PARAM, 4 BAD_STATE, 5 HW_ERROR.
 
 Independent design. Tindeq's public page describes a control point and a data point using TLV framing;
 FENRIR does not reuse its UUIDs, opcodes or packet layout, and is not wire-compatible with it.
+
+## Version history
+
+| Version | Change |
+|---|---|
+| 1.0 | First draft (NAU7802 rates 80 / 320 SPS). Never deployed on hardware. |
+| 1.1 | 2026-11-17, decision D-024 (ADS1220 ADC). Rates become 90 / 350 SPS (ADS1220 turbo mode has no 80 or 320 SPS setting). SET_RATE still accepts 80 and 320 and maps them, so a 1.0 client keeps working; it must read the real rate from Status. Reference vectors updated to the new rates. |
+

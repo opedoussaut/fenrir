@@ -78,7 +78,7 @@ One new table, linked to the existing set when the recording belongs to one:
 | `link` | jsonb | Packets, lost packets, estimated lost samples, fault packets |
 | `evidence` | existing evidence-level vocabulary | measured / estimated |
 | `summary` | jsonb | peak_n, mean_n, tut_s, rfd (with the windows used), fatigue_index |
-| `samples` | storage object reference | `fenrir.recording/1` JSON (same schema as the Python export), gzip. An 80 SPS, 60 s recording is ~4 800 rows |
+| `samples` | storage object reference | `fenrir.recording/1` JSON (same schema as the Python export), gzip. A 90 SPS, 60 s recording is ~5 400 rows |
 
 Raw counts are kept in the stored recording so results can be recomputed if a calibration is corrected.
 Exports: CSV and the `fenrir.recording/1` JSON, identical to the Python tool's.

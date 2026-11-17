@@ -118,7 +118,10 @@ uint8_t fenrir_command_parse(const uint8_t *buf, size_t len, fenrir_command_t *c
     case FENRIR_OP_SET_RATE:
         if (n != 2) return FENRIR_RES_BAD_LENGTH;
         cmd->u.rate.sps = get_u16(p);
-        if (cmd->u.rate.sps != 80 && cmd->u.rate.sps != 320) return FENRIR_RES_BAD_PARAM;
+        /* 1.0 values are still accepted and mapped to the real rate (minor versions only add). */
+        if (cmd->u.rate.sps == 80) cmd->u.rate.sps = FENRIR_RATE_LOW;
+        if (cmd->u.rate.sps == 320) cmd->u.rate.sps = FENRIR_RATE_HIGH;
+        if (cmd->u.rate.sps != FENRIR_RATE_LOW && cmd->u.rate.sps != FENRIR_RATE_HIGH) return FENRIR_RES_BAD_PARAM;
         return FENRIR_RES_OK;
     case FENRIR_OP_SET_FILTER:
         if (n != 2) return FENRIR_RES_BAD_LENGTH;

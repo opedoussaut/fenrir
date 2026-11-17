@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "fenrir/ads1220.h"
 #include "fenrir/measure.h"
 #include "fenrir/nau7802.h"
 #include "fenrir/protocol.h"
@@ -63,8 +64,14 @@ static void test_commands(void)
     CHECK(fenrir_command_parse(start, 2, &c) == FENRIR_RES_BAD_LENGTH);
     start[2] = 0;
     CHECK(fenrir_command_parse(start, 3, &c) == FENRIR_RES_BAD_PARAM);
-    uint8_t rate[] = { FENRIR_OP_SET_RATE, 0x40, 0x01 }; /* 320 */
-    CHECK(fenrir_command_parse(rate, 3, &c) == FENRIR_RES_OK && c.u.rate.sps == 320);
+    uint8_t rate[] = { FENRIR_OP_SET_RATE, 0x5E, 0x01 }; /* 350 */
+    CHECK(fenrir_command_parse(rate, 3, &c) == FENRIR_RES_OK && c.u.rate.sps == 350);
+    rate[1] = 90; rate[2] = 0;
+    CHECK(fenrir_command_parse(rate, 3, &c) == FENRIR_RES_OK && c.u.rate.sps == 90);
+    rate[1] = 80; /* protocol 1.0 value: mapped to the real rate */
+    CHECK(fenrir_command_parse(rate, 3, &c) == FENRIR_RES_OK && c.u.rate.sps == 90);
+    rate[1] = 0x40; rate[2] = 0x01; /* 320 */
+    CHECK(fenrir_command_parse(rate, 3, &c) == FENRIR_RES_OK && c.u.rate.sps == 350);
     rate[1] = 100; rate[2] = 0;
     CHECK(fenrir_command_parse(rate, 3, &c) == FENRIR_RES_BAD_PARAM);
     uint8_t unknown[] = { 0x77 };
@@ -120,7 +127,7 @@ static void test_config(void)
     a.cal.n_points = 6;
     a.cal.valid = 1;
     a.cal.unix_time = 1794000000u;
-    a.sample_rate = 320;
+    a.sample_rate = 350;
     a.filter_type = FENRIR_FILTER_IIR;
     a.filter_param = 3;
     uint8_t blob[FENRIR_CONFIG_BLOB_LEN];
@@ -128,12 +135,12 @@ static void test_config(void)
     CHECK(fenrir_config_deserialize(&b, blob, sizeof blob));
     CHECK(b.cal.scale_n_per_count == a.cal.scale_n_per_count && b.cal.zero_counts == -1234 &&
           b.cal.tare_counts == 77 && b.cal.max_ref_n == 400 && b.cal.valid == 1 &&
-          b.cal.unix_time == a.cal.unix_time && b.sample_rate == 320 && b.filter_param == 3);
+          b.cal.unix_time == a.cal.unix_time && b.sample_rate == 350 && b.filter_param == 3);
     /* every single-bit corruption must be rejected and fall back to defaults */
     int rejected = 0;
     for (size_t i = 0; i < sizeof blob; i++) {
         blob[i] ^= 0x04;
-        if (!fenrir_config_deserialize(&b, blob, sizeof blob) && b.cal.valid == 0 && b.sample_rate == 80) rejected++;
+        if (!fenrir_config_deserialize(&b, blob, sizeof blob) && b.cal.valid == 0 && b.sample_rate == FENRIR_RATE_LOW) rejected++;
         blob[i] ^= 0x04;
     }
     CHECK(rejected == (int)sizeof blob);
@@ -285,6 +292,92 @@ static void test_nau7802(void)
     CHECK(nau7802_init(&bus, 80) == NAU7802_ERR_CAL);
 }
 
+/* ---- ADS1220 (SPI) ------------------------------------------------------- */
+typedef struct {
+    bool present;      /* false: MISO floats high, nothing is written */
+    bool fail;         /* transfer reports an error */
+    bool stuck_reg;    /* a register ignores writes (wiring fault) */
+    uint8_t reg[4];
+    bool converting, powered_down, drdy;
+    int32_t next_sample;
+    int resets, starts;
+    uint8_t last_cmd;
+    uint32_t waited_us;
+} mock_spi_t;
+
+static bool spi_transfer(void *ctx, const uint8_t *tx, uint8_t *rx, size_t len)
+{
+    mock_spi_t *m = ctx;
+    if (m->fail) return false;
+    if (rx) memset(rx, m->present ? 0x00 : 0xFF, len);
+    if (!m->present || len == 0) return true;
+    uint8_t c = tx[0];
+    if (m->drdy && len == 3 && tx[0] == 0 && tx[1] == 0 && tx[2] == 0) { /* direct data read */
+        uint32_t u = (uint32_t)m->next_sample;
+        if (rx) { rx[0] = (uint8_t)(u >> 16); rx[1] = (uint8_t)(u >> 8); rx[2] = (uint8_t)u; }
+        m->drdy = false;
+        return true;
+    }
+    m->last_cmd = c;
+    if ((c & 0xFE) == ADS1220_CMD_RESET) { memset(m->reg, 0, sizeof m->reg); m->converting = false; m->resets++; }
+    else if ((c & 0xFE) == ADS1220_CMD_START) { m->converting = true; m->powered_down = false; m->starts++; }
+    else if ((c & 0xFE) == ADS1220_CMD_POWERDOWN) { m->powered_down = true; }
+    else if ((c & 0xF0) == 0x40 || (c & 0xF0) == 0x20) {
+        size_t r0 = (size_t)((c >> 2) & 3), n = (size_t)(c & 3) + 1;
+        for (size_t i = 0; i < n && 1 + i < len && r0 + i < 4; i++) {
+            if ((c & 0xF0) == 0x40) { if (!(m->stuck_reg && r0 + i == 2)) m->reg[r0 + i] = tx[1 + i]; }
+            else if (rx) rx[1 + i] = m->reg[r0 + i];
+        }
+    }
+    return true;
+}
+static bool spi_drdy(void *ctx) { mock_spi_t *m = ctx; return m->present && m->drdy; }
+static void spi_delay(void *ctx, uint32_t us) { ((mock_spi_t *)ctx)->waited_us += us; }
+
+static void test_ads1220(void)
+{
+    mock_spi_t m = { .present = true };
+    ads1220_bus_t bus = { &m, spi_transfer, spi_drdy, spi_delay };
+    CHECK(ads1220_init(&bus, 90) == ADS1220_OK);
+    CHECK(m.resets == 1 && m.waited_us >= 60);         /* RESET then >= 50 us + 32 tCLK */
+    CHECK(m.reg[0] == 0x0E);                           /* AIN0/AIN1, gain 128, PGA on */
+    CHECK(m.reg[1] == 0x34);                           /* DR 001 turbo = 90 SPS, continuous */
+    CHECK(m.reg[2] == 0x40);                           /* external reference REFP0/REFN0 */
+    CHECK(m.reg[3] == 0x00);                           /* DRDY pin only, IDACs off */
+    CHECK(m.converting && m.starts == 1 && m.last_cmd == ADS1220_CMD_START);
+
+    int32_t raw = 0;
+    CHECK(ads1220_read(&bus, &raw) == ADS1220_NOT_READY);
+    m.next_sample = -123456; m.drdy = true;
+    CHECK(ads1220_read(&bus, &raw) == ADS1220_OK && raw == -123456); /* sign extension */
+    m.next_sample = 0x7FFFFF; m.drdy = true;                         /* positive full scale: */
+    CHECK(ads1220_read(&bus, &raw) == ADS1220_OK && raw == 8388607); /* returned untouched */
+    m.next_sample = -8388608; m.drdy = true;
+    CHECK(ads1220_read(&bus, &raw) == ADS1220_OK && raw == -8388608);
+    CHECK(ads1220_read(&bus, &raw) == ADS1220_NOT_READY);
+
+    CHECK(ads1220_set_rate(&bus, 350) == ADS1220_OK && m.reg[1] == 0x74 && m.starts == 2);
+    CHECK(m.reg[0] == 0x0E && m.reg[2] == 0x40);       /* other registers untouched */
+    CHECK(ads1220_set_rate(&bus, 320) == ADS1220_ERR_PARAM && m.reg[1] == 0x74);
+    CHECK(ads1220_init(&bus, 80) == ADS1220_ERR_PARAM);
+    CHECK(ads1220_rate_supported(90) && ads1220_rate_supported(350) && !ads1220_rate_supported(0));
+
+    CHECK(ads1220_power_down(&bus) == ADS1220_OK && m.powered_down);
+
+    mock_spi_t absent = { .present = false };          /* no device: read-back is all ones */
+    bus.ctx = &absent;
+    CHECK(ads1220_init(&bus, 90) == ADS1220_ERR_VERIFY);
+    CHECK(ads1220_read(&bus, &raw) == ADS1220_NOT_READY);
+    mock_spi_t broken = { .present = true, .fail = true };
+    bus.ctx = &broken;
+    CHECK(ads1220_init(&bus, 90) == ADS1220_ERR_BUS);
+    broken.drdy = true;
+    CHECK(ads1220_read(&bus, &raw) == ADS1220_ERR_BUS);
+    mock_spi_t stuck = { .present = true, .stuck_reg = true };
+    bus.ctx = &stuck;
+    CHECK(ads1220_init(&bus, 90) == ADS1220_ERR_VERIFY && !stuck.converting);
+}
+
 int main(void)
 {
     test_force_roundtrip();
@@ -296,6 +389,7 @@ int main(void)
     test_guard();
     test_tare();
     test_nau7802();
+    test_ads1220();
     printf("%d checks, %d failures\n", checks, failures);
     return failures ? 1 : 0;
 }

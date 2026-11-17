@@ -2,15 +2,18 @@
 
 | Folder | State |
 |---|---|
-| [`bom/`](bom/README.md) | Prototype (Option A) purchasing list with price sources |
+| [`bom/`](bom/README.md) | Single-product parts list (`product-bom.csv`, D-023); the old prototype list is kept but superseded |
 | `components/` | Datasheet index below; no custom KiCad symbols or footprints yet |
-| `kicad/` | **Empty.** Schematic and PCB (Option B) start after the prototype has been measured (decision D-003) |
+| [`pcb-design.md`](pcb-design.md) | Custom PCB definition: blocks, parts, pin plan, layout rules (decisions D-019, D-023 to D-025) |
+| `kicad/` | **Empty.** Schematic not started. KiCad 10.0.8 is installed on the design machine |
 | `fabrication/` | **Empty.** No Gerbers, drill files, pick-and-place or assembly drawings exist |
 
 ## Datasheets used
 
 | Part | Document | How it was used |
 |---|---|---|
+| TI ADS1220 (PCB ADC, D-024) | Data sheet SBAS501D from ti.com | Downloaded and read: noise tables (normal and turbo mode), supply 2.3–5.5 V, external reference range up to AVDD, PGA common-mode limits (AVSS + 0.2 V to AVDD − 0.2 V at the PGA outputs), SPI, TSSOP-16 |
+| TI ADS1261 (not selected) | Data sheet SBAS760C from ti.com | Downloaded and read: noise table at gain 128, AVDD 4.75–5.25 V |
 | Nuvoton NAU7802 | Data sheet rev 1.7 — <https://cdn.sparkfun.com/assets/e/c/8/7/6/NAU7802_Data_Sheet_V1.7.pdf> | Downloaded and read: supply, LDO options and drive, rates, register map, power-up sequence. The noise table and parts of the electrical table did not survive text extraction |
 | Phidgets FRC4165_0 (Ningbo ANE ST01) — selected cell | Product page <https://www.phidgets.com/?prodid=1321> and datasheet <https://www.phidgets.com/productfiles/FRC4165/FRC4165_0/Documentation/FRC4165_0_Datasheet.pdf> | Both read: output, impedances, overloads, errors, thread M12 × 1.75, dimensions, IP68, wire colours. Thread depth is not given; the dimension table is partly garbled in text extraction |
 | HT Sensor TAS501 (fallback) | <https://cdn.sparkfun.com/assets/parts/1/2/2/3/8/TAS501.pdf> | Downloaded and read: output, overloads, errors, resistance, wiring colours, dimensions. Thread column ambiguous |
@@ -22,7 +25,7 @@
 ## Requirements for the custom PCB (input to Phase 3)
 
 - Pre-certified ESP32-C3/C6 module with the antenna at the board edge and the keep-out respected.
-- NAU7802 with DRDY on an interrupt pin; bridge traces short, paired, away from the antenna and the
+- Bridge ADC (ADS1220, D-024) with DRDY on an interrupt pin; bridge traces short, paired, away from the antenna and the
   switching/charging section; analog ground joined to digital ground at one point.
 - Dedicated low-noise 3.0–3.3 V regulator for AVDD/excitation (risk R-02); REFP/REFN sensed at the
   bridge connector (ratiometric).

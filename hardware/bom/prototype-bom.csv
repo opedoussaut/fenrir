@@ -8,5 +8,6 @@ BT1,LiPo 3.7 V 400 mAh with protection and JST-PH lead (Adafruit polarity),Adafr
 W1,STEMMA QT / Qwiic cable 100 mm,Adafruit,4210,1,,USD,,Adafruit or EU reseller,NOT VERIFIED,,,U1 to U2
 H1,Lifting eye bolt DIN 580 M12 x 1.75 (WLL 340 kg; C15E; CE marked),any CE-marked maker,DIN 580 M12,2,,EUR,,French industrial supplier (Prolians / Legallais / HPC),NOT VERIFIED (rating verified; price not found),,Standard coarse pitch matches the cell thread M12 x 1.75,Load path
 H2,Thin hex nut M12 DIN 439 (lock nut),any,DIN 439 M12,2,,EUR,,hardware store,NOT VERIFIED,,,Locks eye bolt depth
-E1,Small ABS project box about 80 x 50 x 25 mm or printed shell,tbd,tbd,1,,EUR,,tbd,NOT VERIFIED,,Not designed yet,Protects electronics (not load bearing)
+E1,3D-printed enclosure concept A rev C: back shell + front shell + front plate + button cap; MJF PA12 graphite,printing service (tbd),FENRIR enclosure A rev C (detail design; not released),1,,EUR,,tbd,NOT VERIFIED,,Parts list in mechanical/enclosure-a.md; order only after the received parts are measured,Protects electronics (not load bearing)
 C1,USB-C data cable,any,,1,,EUR,,owned,,,,Flashing and charging
+E2,Screw M2 x 10 thread-forming for plastics; pan head; Torx,any,tbd,4,,EUR,,tbd,NOT VERIFIED,,Pilot hole 1.7 mm to confirm with the screw maker,Closes the enclosure

@@ -1,7 +1,7 @@
 # Prototype A — wiring, flashing and first power-up
 
-Status: **written from datasheets and product pages; never performed.** Correct this document during
-the first build.
+Status: **superseded on 2026-11-17 by decision D-023 (one product only, no modular prototype).**
+Kept because the flashing and first power-up steps carry over to the custom PCB. Never performed.
 
 ## Wiring (no soldering)
 

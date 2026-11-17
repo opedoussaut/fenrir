@@ -18,16 +18,16 @@ const hex = (s: string) => Uint8Array.from(s.match(/../g)!.map((h) => parseInt(h
 test("decodes the firmware reference vectors", () => {
   const p = decodeForce(hex(vectors.force_raw));
   assert.deepEqual(p, {
-    seq: 7, t0Us: 1234567890, dtUs: 12500, status: Status.STREAMING | Status.CAL_VALID | Status.TARED,
+    seq: 7, t0Us: 1234567890, dtUs: 11111, status: Status.STREAMING | Status.CAL_VALID | Status.TARED,
     format: Format.RAW_FORCE, raw: [1000, 108374, -5, 8388607], forceCn: [0, 10000, -1, null],
   });
   const q = decodeForce(hex(vectors.force_only));
   assert.equal(q.seq, 65535);
-  assert.equal(q.dtUs, 3125);
+  assert.equal(q.dtUs, 2857);
   assert.deepEqual(q.raw, []);
   assert.deepEqual(q.forceCn, [0, 10000, -1, null]);
   const s = decodeStatus(hex(vectors.status));
-  assert.deepEqual([s.state, s.batteryPct, s.batteryMv, s.sampleRate, s.uptimeS], [2, 87, 4012, 80, 3600]);
+  assert.deepEqual([s.state, s.batteryPct, s.batteryMv, s.sampleRate, s.uptimeS], [2, 87, 4012, 90, 3600]);
   const c = decodeCalInfo(hex(vectors.calinfo));
   assert.deepEqual([c.valid, c.nPoints, c.maxRefN, c.zeroCounts, c.tareCounts, c.unixTime], [true, 5, 490, -20000, 150, 1794000000]);
   assert.equal(c.scaleNPerCount, 15625 / 2 ** 24);

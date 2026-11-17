@@ -1,6 +1,7 @@
 # Mechanical load path and safety
 
-Status: **design intent. No part has been bought, measured or loaded. No CAD exists yet.**
+Status: **design intent. No part has been bought, measured or loaded.** An enclosure concept model
+exists ([mechanical/enclosure.md](../../mechanical/enclosure.md)); it is not released for printing.
 
 > **FENRIR is a force-measuring instrument, not climbing safety equipment.** It must never be the only
 > link between a person and a fall, must not be used for belaying, anchoring, lowering or fall arrest,
@@ -21,9 +22,10 @@ carabiner / sling  (user's own, rated)
 carabiner / edge / pick-up handle
 ```
 
-Metal only. The electronics box is strapped or screwed to the **side** of the cell body by the cell's
-own small holes or a band; no force passes through it. The cell cable leaves from the fixed side of
-the cell into the box through a gland or grommet with a strain-relief loop.
+Metal only. A 3D-printed shell wraps the cell and holds the electronics on its front face (decision
+D-017). The shell grips the cell's **upper block only** and keeps a 1.5 mm gap everywhere else,
+including around the lower eye bolt, so no force can pass through it. Both eye bolts pass through
+clearance openings in the shell.
 
 The two eyes work as pin joints: a carabiner in each eye lets the assembly align with the pull, which
 keeps bending and side load out of the cell. This is the reason for eye bolts instead of rigid
